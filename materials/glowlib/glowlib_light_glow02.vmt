@@ -1,0 +1,8 @@
+UnlitGeneric
+{
+    "$basetexture"  "glowlib/glowlib_light_glow02"
+    "$vertexalpha"  1
+    "$vertexcolor"  1
+    "$additive"  1
+    "$ignorez"  1
+}
