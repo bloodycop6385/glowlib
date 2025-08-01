@@ -29,3 +29,10 @@ function GlowLib:IsActivated()
     local try = hook.Run("GlowLib::ShouldBeActivated")
     return try
 end
+
+if ( CLIENT ) then
+    function GlowLib:RenderSprite(pos, xSize, ySize, colour)
+        render.SetMaterial(GlowLib.SpriteMaterial)
+        render.DrawSprite(pos, xSize, ySize, colour)
+    end
+end

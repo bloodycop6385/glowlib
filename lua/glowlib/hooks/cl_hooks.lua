@@ -1,6 +1,5 @@
 GlowLib:DevLog( GlowLib.LogTypes.SUCCESS, "Initialising", GlowLib.Colours.CLIENT, " clientside", color_white, " hooks..." )
-
-local SPRITE_MAT = Material("glowlib/glowlib_light_glow02")
+GlowLib.SpriteMaterial = Material("glowlib/glowlib_light_glow02")
 local client = NULL
 hook.Add("OnEntityCreated", "GlowLib::OnEntityCreated", function(entity)
     if !IsValid(entity) || entity:IsWorld() then return end
@@ -67,11 +66,6 @@ local function GetSpriteSize(definition, entity)
     return 16, 16
 end
 
-local function RenderSprite(pos, xSize, ySize, colour)
-    render.SetMaterial(SPRITE_MAT)
-    render.DrawSprite(pos, xSize, ySize, colour)
-end
-
 hook.Add("PostDrawOpaqueRenderables", "GlowLib::PostDrawOpaqueRenderables", function()
     if !GlowLib:IsActivated() then return end
 
@@ -100,7 +94,7 @@ hook.Add("PostDrawOpaqueRenderables", "GlowLib::PostDrawOpaqueRenderables", func
         local xSize, ySize = GetSpriteSize(definition, v)
         if !isnumber(xSize) || !isnumber(ySize) then continue end
 
-        RenderSprite(origin, xSize || 16, ySize || 16, colour)
+        GlowLib:RenderSprite(origin, xSize || 16, ySize || 16, colour)
 
         if isfunction(definition.OnDraw) then
             definition:OnDraw(v, origin, xSize, ySize, colour)
