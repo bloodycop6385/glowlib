@@ -1,6 +1,6 @@
 GlowLib:DevLog( GlowLib.LogTypes.SUCCESS, "Initialising", GlowLib.Colours.CLIENT, " clientside", color_white, " hooks..." )
 GlowLib.SpriteMaterial = Material("glowlib/glowlib_light_glow02")
-local client = NULL
+
 hook.Add("OnEntityCreated", "GlowLib::OnEntityCreated", function(entity)
     if !IsValid(entity) || entity:IsWorld() then return end
 
@@ -13,14 +13,6 @@ hook.Add("OnEntityCreated", "GlowLib::OnEntityCreated", function(entity)
             hook.Run("GlowLib::OnEntityCreated", entity, definition)
         end
     end
-end)
-
-hook.Add("OnReloaded", "GlowLib::OnReloadedClient", function()
-    GlowLib:DevLog(GlowLib.LogTypes.SUCCESS, "Reloaded GlowLib client hooks")
-    GlowLib.SpriteMaterial = Material("glowlib/glowlib_light_glow02")
-
-    -- Reinitialize client variable in case it was reset
-    client = LocalPlayer()
 end)
 
 hook.Add("GlowLib::ShouldDraw", "GlowLib::ShouldDraw", function(entity, definition)
@@ -101,12 +93,11 @@ hook.Add("PostDrawTranslucentRenderables", "GlowLib::PostDrawTranslucentRenderab
         if !isnumber(xSize) || !isnumber(ySize) then continue end
 
         local angInner = 45
-        local angOuter = 60
+        local angOuter = angInner + 35
 
         local eyePos = client:EyePos()
         local toSprite = (origin - eyePos):GetNormalized()
-        local dirNorm = Vector(0, 1, 0):GetNormalized()
-        local dot = toSprite:Dot(dirNorm)
+        local dot = toSprite:Dot(v:GetAttachment(v:LookupAttachment("eyes")).Ang:Forward())
         local angle = math.deg(math.acos(math.Clamp(dot, -1, 1)))
 
         if angle > angOuter then return end
