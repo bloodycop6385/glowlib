@@ -4,10 +4,6 @@ local client = NULL
 hook.Add("OnEntityCreated", "GlowLib::OnEntityCreated", function(entity)
     if !IsValid(entity) || entity:IsWorld() then return end
 
-    if entity == LocalPlayer() && !IsValid(client) then
-        client = entity
-    end
-
     local model = isfunction(entity.GetModel) && entity:GetModel()
     if isstring(model) && util.IsValidModel(model) then
         model = string.lower(model)
@@ -17,6 +13,14 @@ hook.Add("OnEntityCreated", "GlowLib::OnEntityCreated", function(entity)
             hook.Run("GlowLib::OnEntityCreated", entity, definition)
         end
     end
+end)
+
+hook.Add("OnReloaded", "GlowLib::OnReloadedClient", function()
+    GlowLib:DevLog(GlowLib.LogTypes.SUCCESS, "Reloaded GlowLib client hooks")
+    GlowLib.SpriteMaterial = Material("glowlib/glowlib_light_glow02")
+
+    -- Reinitialize client variable in case it was reset
+    client = LocalPlayer()
 end)
 
 hook.Add("GlowLib::ShouldDraw", "GlowLib::ShouldDraw", function(entity, definition)
@@ -66,8 +70,10 @@ local function GetSpriteSize(definition, entity)
     return 16, 16
 end
 
-hook.Add("PostDrawOpaqueRenderables", "GlowLib::PostDrawOpaqueRenderables", function()
+hook.Add("PostDrawTranslucentRenderables", "GlowLib::PostDrawTranslucentRenderables", function()
     if !GlowLib:IsActivated() then return end
+
+    local client = LocalPlayer()
 
     for k, v in ents.Iterator() do
         if v:IsWorld() then continue end
@@ -94,7 +100,31 @@ hook.Add("PostDrawOpaqueRenderables", "GlowLib::PostDrawOpaqueRenderables", func
         local xSize, ySize = GetSpriteSize(definition, v)
         if !isnumber(xSize) || !isnumber(ySize) then continue end
 
-        GlowLib:RenderSprite(origin, xSize || 16, ySize || 16, colour)
+        local angInner = 45
+        local angOuter = 60
+
+        local eyePos = client:EyePos()
+        local toSprite = (origin - eyePos):GetNormalized()
+        local dirNorm = Vector(0, 1, 0):GetNormalized()
+        local dot = toSprite:Dot(dirNorm)
+        local angle = math.deg(math.acos(math.Clamp(dot, -1, 1)))
+
+        if angle > angOuter then return end
+
+        -- Fade out alpha as angle approaches outerAngle, fully faded in at innerAngle
+        local fadeFrac
+        if angle <= angInner then
+            fadeFrac = 1
+        else
+            fadeFrac = 1 - ((angle - angInner) / (angOuter - angInner))
+            fadeFrac = math.Clamp(fadeFrac, 0, 1)
+        end
+
+        local fadedCol = Color(colour.r, colour.g, colour.b, math.floor(colour.a * fadeFrac))
+
+        cam.Start3D()
+            GlowLib:RenderSprite(origin, xSize || 16, ySize || 16, fadedCol)
+        cam.End3D()
 
         if isfunction(definition.OnDraw) then
             definition:OnDraw(v, origin, xSize, ySize, colour)
