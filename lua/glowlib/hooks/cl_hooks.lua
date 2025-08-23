@@ -97,7 +97,11 @@ hook.Add("PostDrawTranslucentRenderables", "GlowLib::PostDrawTranslucentRenderab
 
         local eyePos = client:EyePos()
         local toSprite = (origin - eyePos):GetNormalized()
-        local dot = toSprite:Dot(v:GetAttachment(v:LookupAttachment("eyes")).Ang:Forward())
+
+        local eyeAttachmentIndex = v:LookupAttachment("eyes")
+        if ( eyeAttachmentIndex <= 0 ) then continue end
+
+        local dot = toSprite:Dot(v:GetAttachment(eyeAttachmentIndex).Ang:Forward())
         local angle = math.deg(math.acos(math.Clamp(dot, -1, 1)))
 
         if angle > angOuter then return end
