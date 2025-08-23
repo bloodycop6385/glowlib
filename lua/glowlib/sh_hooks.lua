@@ -146,7 +146,7 @@ else
         if ( !cl_glowlib_enabled ) then return end
 
         for k, v in ents.Iterator() do
-            if ( !IsValid(v) ) then continue end
+            if ( v:IsDormant() ) then continue end
 
             local model = v:GetModel()
             if ( !model or model == "" ) then continue end
