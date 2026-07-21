@@ -163,6 +163,8 @@ if ( CLIENT ) then
     end)
 
     hook.Add("HUDPaint", "GlowLib:TextDev", function()
+        if ( !toggleShowAttachmentPos ) then return end
+
         local ply = LocalPlayer()
         if ( !IsValid(ply) ) then return end
 
@@ -188,31 +190,29 @@ if ( CLIENT ) then
             end
         end
 
-        if toggleShowAttachmentPos then
-            if !attachmentToShow then return end
+        if !attachmentToShow then return end
 
-            if ( attachmentToShow == "*" ) then
-                local attachments = ent:GetAttachments()
-                for k, v in ipairs(attachments) do
-                    local attachment_data = ent:GetAttachment(v.id)
-                    if !attachment_data then return end
+        if ( attachmentToShow == "*" ) then
+            local attachments = ent:GetAttachments()
+            for k, v in ipairs(attachments) do
+                local attachment_data = ent:GetAttachment(v.id)
+                if !attachment_data then return end
 
-                    local pos = attachment_data.Pos:ToScreen()
-                    draw.SimpleText("Attachment " .. v.name, "DermaDefault", pos.x, pos.y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-                end
-
-                return
+                local pos = attachment_data.Pos:ToScreen()
+                draw.SimpleText("Attachment " .. v.name, "DermaDefault", pos.x, pos.y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             end
 
-            local attachment = ent:LookupAttachment(attachmentToShow)
-            if !attachment then return end
-
-            local attachment_data = ent:GetAttachment(attachment)
-            if !attachment_data then return end
-
-            local pos = attachment_data.Pos:ToScreen()
-            draw.SimpleText("Attachment " .. attachmentToShow, "DermaDefault", pos.x, pos.y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            return
         end
+
+        local attachment = ent:LookupAttachment(attachmentToShow)
+        if !attachment then return end
+
+        local attachment_data = ent:GetAttachment(attachment)
+        if !attachment_data then return end
+
+        local pos = attachment_data.Pos:ToScreen()
+        draw.SimpleText("Attachment " .. attachmentToShow, "DermaDefault", pos.x, pos.y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end)
 
     MsgC(GlowLib.OutputColor, "[ GlowLib ] by eon ( bloodycop )", color_white, " has been loaded!\n")
