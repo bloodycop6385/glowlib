@@ -95,13 +95,13 @@ if ( SERVER ) then
 
             return sprite
         end
-        
+
         return
     end
 
     function GlowLib:Remove(ent)
         if ( !IsValid(ent) ) then return end
-        
+
         local model = ent:GetModel()
         if ( !model ) then return end
 
@@ -402,9 +402,12 @@ function GlowLib:ShouldDraw(ent)
     if ( ent:GetNoDraw() ) then return false end
 
     if ( CLIENT ) then
-        local cl_ragdoll_remove = GetConVar("cl_glowlib_remove_on_death"):GetBool()
-        if ( cl_ragdoll_remove and ent:IsRagdoll() and ent:GetNW2Bool("GlowLib:IsNPCRagdoll", false) ) then
-            return false
+        if ( ent:IsRagdoll() ) then
+            if ( ent:GetNW2Bool("GlowLib:IsNPCRagdoll", false) == true and GlowLib.CVARS.CL_REMOVE_ON_DEATH:GetBool() ) then
+                return false
+            end
+
+            return GlowLib.CVARS.CL_RAGDOLLS:GetBool()
         end
 
         if ( ent == LocalPlayer() ) then
@@ -418,9 +421,12 @@ function GlowLib:ShouldDraw(ent)
             return false
         end
     else
-        local sv_ragdoll_remove = GetConVar("sv_glowlib_remove_on_death"):GetBool()
-        if ( sv_ragdoll_remove and ent:IsRagdoll() and ent:GetNW2Bool("GlowLib:IsNPCRagdoll", false) ) then
-            return false
+        if ( ent:IsRagdoll() ) then
+            if ( ent:GetNW2Bool("GlowLib:IsNPCRagdoll", false) == true and GlowLib.CVARS.SV_REMOVE_ON_DEATH:GetBool() ) then
+                return false
+            end
+
+            return GlowLib.CVARS.SV_RAGDOLLS:GetBool()
         end
 
         if ( ent:IsPlayer() ) then

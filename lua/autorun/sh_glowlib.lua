@@ -6,23 +6,24 @@ GlowLib.OutputColor = Color(255, 100, 0)
 local fileFind, AddCSLuaFile, fileInclude = file.Find, AddCSLuaFile, include
 
 function GlowLib:IncludeFile(fileName, realm)
-    realm = (realm or ""):lower()
-    fileName = fileName:lower()
+    realm = string.lower(realm or "")
+    fileName = string.lower(fileName)
 
-    local realFileName = fileName:lower()
-    if ( fileName:find("glowlib/") ) then
+    local realFileName = string.lower(fileName)
+    if ( string.find(fileName, "glowlib/", 1, true) ) then
         realFileName = fileName:lower():gsub("glowlib/", "")
+        realFileName = string.gsub(string.lower(fileName), "glowlib/", "")
     end
 
-    if ( ( realm:lower() == "server" or realFileName:find("sv_") ) and SERVER ) then
+    if ( ( string.lower(realm) == "server" or string.find(realFileName, "sv_", 1, true) ) and SERVER ) then
         return fileInclude(fileName)
-	elseif ( realm:lower() == "shared" or realFileName:find("shared.lua") or realFileName:find("sh_") ) then
+	elseif ( string.lower(realm) == "shared" or string.find(realFileName, "shared.lua", 1, true) or string.find(realFileName, "sh_", 1, true) ) then
 		if ( SERVER ) then
 			AddCSLuaFile(fileName)
 		end
 
 		return fileInclude(fileName)
-	elseif ( realm:lower() == "client" or realFileName:find("cl_") ) then
+	elseif ( string.lower(realm) == "client" or realFileName:find("cl_") ) then
 		if ( SERVER ) then
 			AddCSLuaFile(fileName)
 		else
@@ -32,7 +33,7 @@ function GlowLib:IncludeFile(fileName, realm)
 end
 
 function GlowLib:IncludeDir(dir)
-    local files, folders = fileFind(dir .. "/*", "LUA")
+    local files, folders = fileFind(dir .. "/*.lua", "LUA")
     for _, fileName in ipairs(files) do
         self:IncludeFile(dir .. "/" .. fileName)
     end

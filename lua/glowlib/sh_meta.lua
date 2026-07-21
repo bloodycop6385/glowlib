@@ -1,5 +1,5 @@
 local ENTITY = FindMetaTable("Entity")
-
+local GlowLib = GlowLib
 function ENTITY:GetGlowingEyes()
     local eyes = {}
 

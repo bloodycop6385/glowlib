@@ -56,7 +56,7 @@ if ( SERVER ) then
             end
         end
 
-        nextThinkSV = CurTime() + 1
+        nextThinkSV = CurTime() + GlowLib.Config.DELAY_THINK_SERVER
     end)
 
     hook.Add("DoPlayerDeath", "GlowLib:DoPlayerDeath", function(ply)
@@ -78,18 +78,15 @@ if ( SERVER ) then
         timer.Simple(0, function()
             if ( !IsValid(ragdoll) ) then return end
 
-            local sv_ragdoll = GetConVar("sv_glowlib_remove_on_death"):GetBool()
+            ragdoll:SetNW2Bool("GlowLib:IsNPCRagdoll", true)
+
+            local sv_ragdoll = GlowLib.CVARS.SV_REMOVE_ON_DEATH:GetBool()
             if ( sv_ragdoll ) then
                 ragdoll:SetNW2Bool("GlowLib:ShouldDraw", false)
-                ragdoll:SetNW2Bool("GlowLib:IsNPCRagdoll", true)
                 GlowLib:Hide(ragdoll)
 
                 return
             end
-
-            net.Start("GlowLib:HandleClientsideRagdoll")
-                net.WriteEntity(ragdoll)
-            net.Broadcast()
         end)
     end)
 
@@ -132,8 +129,24 @@ if ( SERVER ) then
         return true
     end)
 else
+    hook.Add("CreateClientsideRagdoll", "GlowLib:CreateClientsideRagdoll", function(ragdoll)
+        if ( !IsValid(ragdoll) ) then return end
+
+        timer.Simple(0, function()
+            if ( !IsValid(ragdoll) ) then return end
+
+            ragdoll:SetNW2Bool("GlowLib:IsNPCRagdoll", true)
+
+            local cl_ragdoll = GlowLib.CVARS.CL_REMOVE_ON_DEATH:GetBool()
+            if ( cl_ragdoll ) then
+                ragdoll:SetNW2Bool("GlowLib:ShouldDraw", false)
+                GlowLib:Hide(ragdoll)
+            end
+        end)
+    end)
+
     local function handleViewEntityChange()
-        local cl_glowlib_enabled = GetConVar("cl_glowlib_enabled"):GetBool()
+        local cl_glowlib_enabled = GlowLib.CVARS.CL_ENABLED:GetBool()
         if ( !cl_glowlib_enabled ) then return end
 
         for i = 1, #GlowLib.Glow_Data_Keys do
@@ -178,7 +191,7 @@ else
 
         if ( nextThinkCL > CurTime() ) then return end
 
-        local cl_glowlib_enabled = GetConVar("cl_glowlib_enabled"):GetBool()
+        local cl_glowlib_enabled = GlowLib.CVARS.CL_ENABLED:GetBool()
         if ( !cl_glowlib_enabled ) then return end
 
         for i = 1, #GlowLib.Glow_Data_Keys do
@@ -203,7 +216,7 @@ else
             end
         end
 
-        nextThinkCL = CurTime() + 1
+        nextThinkCL = CurTime() + GlowLib.Config.DELAY_THINK_CLIENT
     end)
 
     hook.Add("GlowLib_CanUseCreationMenu", "GlowLib:CanUseCreationMenu", function(ply, creationMenu)

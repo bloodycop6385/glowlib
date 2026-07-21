@@ -1,3 +1,5 @@
+local GlowLib = GlowLib
+
 if ( SERVER ) then
     util.AddNetworkString("GlowLib:EditMenu:Save")
     util.AddNetworkString("GlowLib:HideServerside")
@@ -43,22 +45,6 @@ else
         end
     end)
 
-    net.Receive("GlowLib:HandleClientsideRagdoll", function(len)
-        local ply = LocalPlayer()
-        if ( !IsValid(ply) ) then return end
-
-        local ent = net.ReadEntity()
-        if ( !IsValid(ent) ) then return end
-
-        local cl_glowLib = GetConVar("cl_glowlib_remove_on_death"):GetBool()
-        if ( !GlowLib:ShouldDraw(ent) or cl_glowLib and ent:GetNW2Bool("GlowLib:IsNPCRagdoll", false) ) then
-            ent:SetNW2Bool("GlowLib:ShouldDraw", false)
-            ent:SetNW2Bool("GlowLib:IsNPCRagdoll", true)
-
-            GlowLib:Hide(ent)
-        end
-    end)
-
     net.Receive("GlowLib:ClientsideInitalize", function()
         local ent = net.ReadEntity()
         if ( !IsValid(ent) ) then return end
@@ -73,7 +59,7 @@ else
         local glow_data = GlowLib.Glow_Data[model]
         if ( !glow_data ) then return end
 
-        if ( glow_data.OnInitialize and isfunction(glow_data.OnInitialize) ) then
+        if ( isfunction(glow_data.OnInitialize) ) then
             glow_data:OnInitialize(ent, sprite)
         end
 

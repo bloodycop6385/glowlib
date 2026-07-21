@@ -1,12 +1,21 @@
 local GlowLib = GlowLib
 
+GlowLib.CVARS = {}
+
 if ( CLIENT ) then
-    CreateClientConVar("cl_glowlib_enabled", "1", true, true, "Enable or disable GlowLib", 0, 1)
-    CreateClientConVar("cl_glowlib_remove_on_death", "1", true, true, "Remove glowing eyes on death (NPCs)", 0, 1)
+    GlowLib.CVARS.CL_ENABLED            = CreateClientConVar("cl_glowlib_enabled", "1", true, true, "Enable or disable GlowLib", 0, 1)
+    GlowLib.CVARS.CL_REMOVE_ON_DEATH    = CreateClientConVar("cl_glowlib_remove_on_death", "1", true, true, "Remove glowing eyes on death (NPCs)", 0, 1)
+    GlowLib.CVARS.CL_RAGDOLLS           = CreateClientConVar("cl_glowlib_ragdolls", "1", true, true, "Enable or disable ragdoll glowing", 0, 1)
 else
-    CreateConVar("sv_glowlib_enabled", "1", {FCVAR_ARCHIVE, FCVAR_GAMEDLL}, "Enable or disable GlowLib", 0, 1)
-    CreateConVar("sv_glowlib_remove_on_death", "1", {FCVAR_ARCHIVE, FCVAR_GAMEDLL}, "Enable or disable removing Glowing Eyes On Death (NPCs)", 0, 1)
+    GlowLib.CVARS.SV_ENABLED            = CreateConVar("sv_glowlib_enabled", "1", {FCVAR_ARCHIVE, FCVAR_GAMEDLL}, "Enable or disable GlowLib", 0, 1)
+    GlowLib.CVARS.SV_REMOVE_ON_DEATH    = CreateConVar("sv_glowlib_remove_on_death", "1", {FCVAR_ARCHIVE, FCVAR_GAMEDLL}, "Enable or disable removing Glowing Eyes On Death (NPCs)", 0, 1)
+    GlowLib.CVARS.SV_RAGDOLLS           = CreateConVar("sv_glowlib_ragdolls", "1", {FCVAR_ARCHIVE, FCVAR_GAMEDLL}, "Enable or disable ragdoll glowing", 0, 1)
 end
+
+GlowLib.Config = {
+    DELAY_THINK_SERVER = 0.3,
+    DELAY_THINK_CLIENT = 0.3,
+}
 
 cvars.AddChangeCallback("sv_glowlib_enabled", function(_, _, newValue)
     if ( !SERVER ) then return end
