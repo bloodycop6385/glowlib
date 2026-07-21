@@ -118,7 +118,11 @@ if ( CLIENT ) then
         local ent = LocalPlayer():GetEyeTrace().Entity
         if ( !IsValid(ent) ) then return end
 
-        for k, v in ipairs(ent:GetChildren()) do
+        local children = ent:GetChildren()
+        if ( children[1] == nil ) then return end
+
+        for i = 1, #children do
+            local v = children[i]
             if !IsValid(v) then continue end
 
             local addText = ""
@@ -142,31 +146,10 @@ if ( CLIENT ) then
         MsgC(GlowLib.OutputColor, "[ GlowLib ] [ Debugging ] [ 3D2D ] ", color_white, "3D2D has been disabled!\n")
     end)
 
-    local toggleShowAttachmentPos = false
-    local attachmentToShow
-    concommand.Add("cl_glowlib_toggle_show_attachment_pos", function(ply, cmd, args)
-        toggleShowAttachmentPos = !toggleShowAttachmentPos
-
-        if ( toggleShowAttachmentPos ) then
-            return MsgC(GlowLib.OutputColor, "[ GlowLib ] [ Debugging ] [ Attachment Pos ] ", color_white, "Attachment positions have been enabled!\n")
-        end
-
-        MsgC(GlowLib.OutputColor, "[ GlowLib ] [ Debugging ] [ Attachment Pos ] ", color_white, "Attachment positions have been disabled!\n")
-    end)
-
-    concommand.Add("cl_glowlib_set_attachment_pos", function(ply, cmd, args)
-        if !args or !args[1] or args[1] == "" then
-            return MsgC(GlowLib.OutputColor, "[ GlowLib ] [ Debugging ] [ Attachment Pos ] ", color_white, "Please provide an attachment name!\n")
-        end
-
-        attachmentToShow = args[1]
-    end)
-
-    hook.Add("HUDPaint", "GlowLib:TextDev", function()
+    local function TextDevHUDPaint()
         if ( !toggleShowAttachmentPos ) then return end
 
         local ply = LocalPlayer()
-        if ( !IsValid(ply) ) then return end
 
         local ent = ply:GetEyeTrace().Entity
         if ( toggle3D2D ) then
@@ -174,14 +157,18 @@ if ( CLIENT ) then
 
             local model = ent:GetModel()
             if ( !model ) then return end
-            model = model:lower()
+            model = string.lower(model)
 
             local glowData = GlowLib.Glow_Data[model]
-            if ( !glowData ) then return end
+            if ( !istable(glowData) ) then return end
 
             local add = ""
 
-            for k, v in ipairs(ent:GetChildren()) do
+            local children = ent:GetChildren()
+            if ( children[1] == nil ) then return end
+
+            for i = 1, #children do
+                local v = children[i]
                 if ( !IsValid(v) ) then continue end
                 if ( v:GetClass() != "env_sprite" ) then continue end
 
@@ -190,7 +177,7 @@ if ( CLIENT ) then
             end
         end
 
-        if !attachmentToShow then return end
+        if !isstring(attachmentToShow) then return end
 
         if ( attachmentToShow == "*" ) then
             local attachments = ent:GetAttachments()
@@ -201,18 +188,40 @@ if ( CLIENT ) then
                 local pos = attachment_data.Pos:ToScreen()
                 draw.SimpleText("Attachment " .. v.name, "DermaDefault", pos.x, pos.y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             end
+        else
+            local attachment = ent:LookupAttachment(attachmentToShow)
+            if !attachment then return end
 
-            return
+            local attachment_data = ent:GetAttachment(attachment)
+            if !attachment_data then return end
+
+            local pos = attachment_data.Pos:ToScreen()
+            draw.SimpleText("Attachment " .. attachmentToShow, "DermaDefault", pos.x, pos.y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        end
+    end
+
+    local toggleShowAttachmentPos = false
+    local attachmentToShow
+    concommand.Add("cl_glowlib_toggle_show_attachment_pos", function(ply, cmd, args)
+        toggleShowAttachmentPos = !toggleShowAttachmentPos
+
+
+        if ( toggleShowAttachmentPos ) then
+            hook.Add("HUDPaint", "GlowLib:TextDev", TextDevHUDPaint)
+
+            return MsgC(GlowLib.OutputColor, "[ GlowLib ] [ Debugging ] [ Attachment Pos ] ", color_white, "Attachment positions have been enabled!\n")
         end
 
-        local attachment = ent:LookupAttachment(attachmentToShow)
-        if !attachment then return end
+        MsgC(GlowLib.OutputColor, "[ GlowLib ] [ Debugging ] [ Attachment Pos ] ", color_white, "Attachment positions have been disabled!\n")
+        hook.Remove("HUDPaint", "GlowLib:TextDev")
+    end)
 
-        local attachment_data = ent:GetAttachment(attachment)
-        if !attachment_data then return end
+    concommand.Add("cl_glowlib_set_attachment_pos", function(ply, cmd, args)
+        if !args or !args[1] or args[1] == "" then
+            return MsgC(GlowLib.OutputColor, "[ GlowLib ] [ Debugging ] [ Attachment Pos ] ", color_white, "Please provide an attachment name!\n")
+        end
 
-        local pos = attachment_data.Pos:ToScreen()
-        draw.SimpleText("Attachment " .. attachmentToShow, "DermaDefault", pos.x, pos.y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        attachmentToShow = args[1]
     end)
 
     MsgC(GlowLib.OutputColor, "[ GlowLib ] by eon ( bloodycop )", color_white, " has been loaded!\n")
