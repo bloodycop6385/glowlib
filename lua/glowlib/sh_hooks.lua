@@ -1,34 +1,33 @@
 local GlowLib = GlowLib
 
-local function updateGlow(ent)
-    if ( !SERVER ) then return end
-    if ( !IsValid(ent) ) then return end
-
-    local model = ent:GetModel()
-    if ( !model ) then return end
-    model = model:lower()
-
-    local ent_table = ent:GetTable()
-    if ( !ent_table ) then return end
-
-    local lastStored = ent_table.GlowLib_LastStoredModel or model
-    if ( lastStored != model ) then
-        GlowLib:Remove(ent)
-    end
-
-    ent_table.GlowLib_LastStoredModel = model
-
-    local glowEyes = ent:GetGlowingEyes()
-    if ( #glowEyes == 0 ) then
-        GlowLib:Initialize(ent)
-
-        return
-    end
-
-    GlowLib:Update(ent)
-end
-
 if ( SERVER ) then
+    local function updateGlow(ent)
+        if ( !IsValid(ent) ) then return end
+
+        local model = ent:GetModel()
+        if ( !model ) then return end
+        model = model:lower()
+
+        local ent_table = ent:GetTable()
+        if ( !ent_table ) then return end
+
+        local lastStored = ent_table.GlowLib_LastStoredModel or model
+        if ( lastStored != model ) then
+            GlowLib:Remove(ent)
+        end
+
+        ent_table.GlowLib_LastStoredModel = model
+
+        local glowEyes = ent:GetGlowingEyes()
+        if ( glowEyes[1] == nil ) then
+            GlowLib:Initialize(ent)
+
+            return
+        end
+
+        GlowLib:Update(ent)
+    end
+
     local nextThinkSV = 0
     hook.Add("Think", "GlowLib:Think_SV", function()
         if ( nextThinkSV > CurTime() ) then return end
@@ -36,27 +35,25 @@ if ( SERVER ) then
         local sv_enabled = GetConVar("sv_glowlib_enabled"):GetBool()
         if ( !sv_enabled ) then return end
 
-        for k, v in ents.Iterator() do
-            if ( !IsValid(v) ) then continue end
+        for i = 1, #GlowLib.Glow_Data_Keys do
+            local model = GlowLib.Glow_Data_Keys[i]
+            model = string.lower(model)
 
-            local model = v:GetModel()
-            if ( !model ) then continue end
-            model = model:lower()
+            local entities = ents.FindByModel(model)
+            if ( !entities or entities[1] == nil ) then continue end
 
-            local glowData = GlowLib.Glow_Data[model]
-            if ( !glowData ) then
-                GlowLib:Remove(v)
-                continue
+            for j = 1, #entities do
+                local ent = entities[j]
+                if ( !IsValid(ent) ) then continue end
+
+                if ( !GlowLib:ShouldDraw(ent) ) then
+                    GlowLib:Hide(ent)
+                    continue
+                end
+
+                updateGlow(ent)
+                GlowLib:Show(ent)
             end
-
-            if ( !GlowLib:ShouldDraw(v) ) then
-                GlowLib:Hide(v)
-
-                continue
-            end
-
-            updateGlow(v)
-            GlowLib:Show(v)
         end
 
         nextThinkSV = CurTime() + 1
@@ -67,7 +64,7 @@ if ( SERVER ) then
 
         local model = ply:GetModel()
         if ( !model ) then return end
-        model = model:lower()
+        model = string.lower(model)
 
         local glowData = GlowLib.Glow_Data[model]
         if ( !glowData ) then return end
@@ -101,7 +98,7 @@ if ( SERVER ) then
 
         local model = npc:GetModel()
         if ( !model ) then return end
-        model = model:lower()
+        model = string.lower(model)
 
         local glowData = GlowLib.Glow_Data[model]
         if ( !glowData ) then return end
@@ -120,7 +117,7 @@ if ( SERVER ) then
 
         local glowingEyes = ent:GetGlowingEyes()
         if ( !glowingEyes ) then return false end
-        if ( #glowingEyes == 0 ) then return false end
+        if ( glowingEyes[1] == nil ) then return false end
 
         return true
     end)
@@ -135,35 +132,75 @@ if ( SERVER ) then
         return true
     end)
 else
-    local nextThinkCL = 0
-    hook.Add("Think", "GlowLib:Think_CL", function()
-        if ( nextThinkCL > CurTime() ) then return end
+    local function handleViewEntityChange()
+        local cl_glowlib_enabled = GetConVar("cl_glowlib_enabled"):GetBool()
+        if ( !cl_glowlib_enabled ) then return end
 
-        local ply = LocalPlayer()
-        if ( !IsValid(ply) ) then return end
+        for i = 1, #GlowLib.Glow_Data_Keys do
+            local model = GlowLib.Glow_Data_Keys[i]
+            model = string.lower(model)
+
+            local entities = ents.FindByModel(model)
+            if ( !entities or entities[1] == nil ) then continue end
+
+            for j = 1, #entities do
+                local ent = entities[j]
+                if ( !IsValid(ent) ) then continue end
+                if ( ent:IsDormant() ) then continue end
+
+                ent:SetNW2Bool("GlowLib:ShouldDraw", cl_glowlib_enabled)
+                if ( !GlowLib:ShouldDraw(ent) ) then
+                    GlowLib:Hide(ent)
+                    continue
+                end
+
+                GlowLib:Show(ent)
+            end
+        end
+    end
+
+    local nextThinkCL, nextViewEntityThinkCL = 0, 0
+    hook.Add("Think", "GlowLib:Think_CL", function()
+        local client = LocalPlayer()
+        if ( !client or !client:IsValid() ) then return end
+
+        if ( nextViewEntityThinkCL < CurTime() ) then
+            local clientTable = client:GetTable()
+            local viewEntity = GetViewEntity()
+
+            if ( clientTable.GlowLib_LastViewEntity != viewEntity ) then
+                clientTable.GlowLib_LastViewEntity = viewEntity
+                handleViewEntityChange()
+            end
+
+            nextViewEntityThinkCL = CurTime() + 0.1
+        end
+
+        if ( nextThinkCL > CurTime() ) then return end
 
         local cl_glowlib_enabled = GetConVar("cl_glowlib_enabled"):GetBool()
         if ( !cl_glowlib_enabled ) then return end
 
-        for k, v in ents.Iterator() do
-            if ( v:IsDormant() ) then continue end
+        for i = 1, #GlowLib.Glow_Data_Keys do
+            local model = GlowLib.Glow_Data_Keys[i]
+            model = string.lower(model)
 
-            local model = v:GetModel()
-            if ( !model or model == "" ) then continue end
-            model = model:lower()
+            local entities = ents.FindByModel(model)
+            if ( !entities or entities[1] == nil ) then continue end
 
-            local glowData = GlowLib.Glow_Data[model]
-            if ( !glowData ) then continue end
+            for j = 1, #entities do
+                local ent = entities[j]
+                if ( !IsValid(ent) ) then continue end
+                if ( ent:IsDormant() ) then continue end
 
-            v:SetNW2Bool("GlowLib:ShouldDraw", glib_enabled)
+                ent:SetNW2Bool("GlowLib:ShouldDraw", cl_glowlib_enabled)
+                if ( !GlowLib:ShouldDraw(ent) ) then
+                    GlowLib:Hide(ent)
+                    continue
+                end
 
-            if ( !GlowLib:ShouldDraw(v) ) then
-                GlowLib:Hide(v)
-
-                continue
+                GlowLib:Show(ent)
             end
-
-            GlowLib:Show(v)
         end
 
         nextThinkCL = CurTime() + 1
@@ -185,7 +222,7 @@ else
 
         local glowingEyes = ent:GetGlowingEyes()
         if ( !glowingEyes ) then return false end
-        if ( #glowingEyes == 0 ) then return false end
+        if ( glowingEyes[1] == nil ) then return false end
 
         return true
     end)
@@ -195,8 +232,8 @@ hook.Add("GlowLib_ShouldDraw", "GlowLib_ShouldDraw", function(ent)
     if ( !IsValid(ent) ) then return false end
 
     local model = ent:GetModel()
-    if ( !model or model == "" ) then return false end
-    model = model:lower()
+    if ( !isstring(model) or model == "" ) then return false end
+    model = string.lower(model)
 
     local glowData = GlowLib.Glow_Data[model]
     if ( !glowData ) then return false end

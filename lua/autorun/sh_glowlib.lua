@@ -1,5 +1,6 @@
 GlowLib = GlowLib or {}
 GlowLib.Glow_Data = {}
+GlowLib.Glow_Data_Keys = {}
 GlowLib.OutputColor = Color(255, 100, 0)
 
 local fileFind, AddCSLuaFile, fileInclude = file.Find, AddCSLuaFile, include
@@ -62,7 +63,9 @@ function GlowLib:Define(entModel, glowData)
         return print("GlowLib:Define - arg[2] glowData is a required argument!")
     end
 
-    self.Glow_Data[entModel:lower()] = glowData
+    local modelLower = string.lower(entModel)
+    self.Glow_Data[modelLower] = glowData
+    self.Glow_Data_Keys[#self.Glow_Data_Keys + 1] = modelLower
 end
 
 GlowLib:IncludeDir("glowlib")

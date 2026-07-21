@@ -3,11 +3,17 @@ local GlowLib = GlowLib
 function GlowLib:GetAllEntities()
     local returned = {}
 
-    for k, v in ents.Iterator() do
-        if ( !IsValid(v) ) then continue end
-        if ( !v:GetNW2Bool("bHasGlowLibEffect", false) ) then continue end
+    for i = 1, #self.Glow_Data_Keys do
+        local model = self.Glow_Data_Keys[i]
+        local entities = ents.FindByModel(model)
+        if ( entities[1] == nil ) then continue end
 
-        table.insert(returned, v)
+        for i = 1, #entities do
+            local v = entities[i]
+            if ( !v:GetNW2Bool("bHasGlowLibEffect", false) ) then continue end
+
+            returned[#returned + 1] = v
+        end
     end
 
     return returned
@@ -16,11 +22,14 @@ end
 function GlowLib:GetAllSprites()
     local returned = {}
 
-    for k, v in ipairs(ents.FindByClass("env_sprite")) do
-        if ( !IsValid(v) ) then continue end
+    local sprites = ents.FindByClass("env_sprite")
+    if ( sprites[1] == nil ) then return returned end
+
+    for i = 1, #sprites do
+        local v = sprites[i]
         if ( !v:GetNW2Bool("bIsGlowLib", false) ) then continue end
 
-        table.insert(returned, v)
+        returned[#returned + 1] = v
     end
 
     return returned
@@ -86,11 +95,13 @@ if ( SERVER ) then
 
             return sprite
         end
+        
+        return
     end
 
     function GlowLib:Remove(ent)
         if ( !IsValid(ent) ) then return end
-
+        
         local model = ent:GetModel()
         if ( !model ) then return end
 
@@ -105,17 +116,13 @@ if ( SERVER ) then
     end
 
     function GlowLib:RemoveAll()
-        for k, v in ents.Iterator() do
-            if not ( IsValid(v) ) then
-                continue
-            end
+        for model, _ in pairs(self.Glow_Data) do
+            local entities = ents.FindByModel(model)
+            if ( entities[1] == nil ) then continue end
 
-            local model = v:GetModel()
-            if not ( model ) then
-                continue
+            for i = 1, #entities do
+                self:Remove(entities[i])
             end
-
-            self:Remove(v)
         end
 
         hook.Run("GlowLib_RemoveAll")

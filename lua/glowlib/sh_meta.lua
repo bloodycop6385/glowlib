@@ -3,11 +3,13 @@ local ENTITY = FindMetaTable("Entity")
 function ENTITY:GetGlowingEyes()
     local eyes = {}
 
-    for k, v in ipairs(self:GetChildren()) do
+    local children = self:GetChildren()
+    for i = 1, #children do
+        local v = children[i]
         if ( !IsValid(v) ) then continue end
 
         if ( v:GetNW2String("GlowEyeName", "") == "GlowLib_Eye_" .. self:EntIndex() ) then
-            table.insert(eyes, v)
+            eyes[#eyes + 1] = v
         end
     end
 
