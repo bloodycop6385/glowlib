@@ -140,9 +140,9 @@ GlowLib:Define("models/vortigaunt.mdl", {
     end,
 })
 
-GlowLib.Glow_Data["models/vortigaunt_slave.mdl"] = table.Copy(GlowLib.Glow_Data["models/vortigaunt.mdl"])
-GlowLib.Glow_Data["models/vortigaunt_blue.mdl"] = table.Copy(GlowLib.Glow_Data["models/vortigaunt.mdl"])
-GlowLib.Glow_Data["models/vortigaunt_doctor.mdl"] = table.Copy(GlowLib.Glow_Data["models/vortigaunt.mdl"])
+GlowLib:CopyDefinition("models/vortigaunt_slave.mdl", "models/vortigaunt.mdl")
+GlowLib:CopyDefinition("models/vortigaunt_blue.mdl", "models/vortigaunt.mdl")
+GlowLib:CopyDefinition("models/vortigaunt_doctor.mdl", "models/vortigaunt.mdl")
 
 GlowLib:Define("models/dog.mdl", {
     Position = function(self, ent)

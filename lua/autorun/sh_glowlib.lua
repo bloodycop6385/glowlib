@@ -69,6 +69,18 @@ function GlowLib:Define(entModel, glowData)
     self.Glow_Data_Keys[#self.Glow_Data_Keys + 1] = modelLower
 end
 
+function GlowLib:CopyDefinition(toModel, fromModel)
+    local glowData = self.Glow_Data[string.lower(fromModel)]
+    if ( !istable(glowData) ) then
+        return MsgC("GlowLib:CopyDefinition - Source model not found!")
+    end
+
+    local toLower = string.lower(toModel)
+
+    self.Glow_Data[toLower] = glowData
+    self.Glow_Data_Keys[#self.Glow_Data_Keys + 1] = toLower
+end
+
 GlowLib:IncludeDir("glowlib")
 GlowLib:IncludeCreations()
 
