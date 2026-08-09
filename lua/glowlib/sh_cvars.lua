@@ -27,10 +27,17 @@ cvars.AddChangeCallback("sv_glowlib_enabled", function(_, _, newValue)
             v:SetNW2Bool("GlowLib:ShouldDraw", false)
         end
 
+        hook.Remove("Think", "GlowLib:ThinkSV")
+
         GlowLib:HideAll()
 
         return
     end
+
+    hook.Remove("Think", "GlowLib:ThinkSV")
+    hook.Add("Think", "GlowLib:ThinkSV", function()
+        GlowLib:Think()
+    end)
 
     for k, v in ipairs(GlowLib:GetAllEntities()) do
         if ( !IsValid(v) ) then continue end
@@ -70,10 +77,17 @@ cvars.AddChangeCallback("cl_glowlib_enabled", function(_, _, newValue)
             v:SetNW2Bool("GlowLib:ShouldDraw", false)
         end
 
+        hook.Remove("Think", "GlowLib:ThinkCL")
+
         GlowLib:HideAll()
 
         return
     end
+
+    hook.Remove("Think", "GlowLib:ThinkCL")
+    hook.Add("Think", "GlowLib:ThinkCL", function()
+        GlowLib:Think()
+    end)
 
     for k, v in ipairs(GlowLib:GetAllEntities()) do
         if ( !IsValid(v) ) then continue end

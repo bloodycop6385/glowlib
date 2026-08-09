@@ -36,6 +36,33 @@ function GlowLib:GetAllSprites()
 end
 
 if ( SERVER ) then
+    local function updateGlow(ent)
+        if ( !IsValid(ent) ) then return end
+
+        local model = ent:GetModel()
+        if ( !model ) then return end
+        model = model:lower()
+
+        local ent_table = ent:GetTable()
+        if ( !ent_table ) then return end
+
+        local lastStored = ent_table.GlowLib_LastStoredModel or model
+        if ( lastStored != model ) then
+            GlowLib:Remove(ent)
+        end
+
+        ent_table.GlowLib_LastStoredModel = model
+
+        local glowEyes = ent:GetGlowingEyes()
+        if ( glowEyes[1] == nil ) then
+            GlowLib:Initialize(ent)
+
+            return
+        end
+
+        GlowLib:Update(ent)
+    end
+
     function GlowLib:CreateSprite(ent, spriteData)
         if ( !IsValid(ent) or !spriteData ) then return end
 
@@ -260,6 +287,108 @@ if ( SERVER ) then
         end
 
         hook.Run("GlowLib_Update", ent)
+    end
+
+    GlowLib.NextThink = 0
+    function GlowLib:Think()
+        if ( self.NextThink > CurTime() ) then return end
+        if ( self.Glow_Data_Keys[1] == nil ) then self.NextThink = CurTime() + GlowLib.Config.DELAY_THINK_SERVER return end
+
+        for i = 1, #self.Glow_Data_Keys do
+            local model = self.Glow_Data_Keys[i]
+            model = string.lower(model)
+
+            local entities = ents.FindByModel(model)
+            if ( !entities or entities[1] == nil ) then continue end
+
+            for j = 1, #entities do
+                local ent = entities[j]
+                if ( !IsValid(ent) ) then continue end
+
+                if ( !GlowLib:ShouldDraw(ent) ) then
+                    GlowLib:Hide(ent)
+                    continue
+                end
+
+                updateGlow(ent)
+                GlowLib:Show(ent)
+            end
+        end
+
+        self.NextThink = CurTime() + GlowLib.Config.DELAY_THINK_SERVER
+    end
+else
+    local function handleViewEntityChange()
+        if ( GlowLib.Glow_Data_Keys[1] == nil ) then return end
+
+        for i = 1, #GlowLib.Glow_Data_Keys do
+            local model = GlowLib.Glow_Data_Keys[i]
+            model = string.lower(model)
+
+            local entities = ents.FindByModel(model)
+            if ( !entities or entities[1] == nil ) then continue end
+
+            for j = 1, #entities do
+                local ent = entities[j]
+                if ( !IsValid(ent) ) then continue end
+                if ( ent:IsDormant() ) then continue end
+
+                ent:SetNW2Bool("GlowLib:ShouldDraw", cl_glowlib_enabled)
+                if ( !GlowLib:ShouldDraw(ent) ) then
+                    GlowLib:Hide(ent)
+                    continue
+                end
+
+                GlowLib:Show(ent)
+            end
+        end
+    end
+
+    GlowLib.NextThink = 0
+    GlowLib.NextViewEntityThink = 0
+
+    function GlowLib:Think()
+        local client = LocalPlayer()
+        if ( !client or !client:IsValid() ) then return end
+
+        if ( self.NextViewEntityThink < CurTime() ) then
+            local clientTable = client:GetTable()
+            local viewEntity = GetViewEntity()
+
+            if ( clientTable.GlowLib_LastViewEntity != viewEntity ) then
+                clientTable.GlowLib_LastViewEntity = viewEntity
+                handleViewEntityChange()
+            end
+
+            self.NextViewEntityThink = CurTime() + 0.1
+        end
+
+        if ( self.NextThink > CurTime() ) then return end
+        if ( GlowLib.Glow_Data_Keys[1] == nil ) then self.NextThink = CurTime() + GlowLib.Config.DELAY_THINK_CLIENT return end
+
+        for i = 1, #GlowLib.Glow_Data_Keys do
+            local model = GlowLib.Glow_Data_Keys[i]
+            model = string.lower(model)
+
+            local entities = ents.FindByModel(model)
+            if ( !entities or entities[1] == nil ) then continue end
+
+            for j = 1, #entities do
+                local ent = entities[j]
+                if ( !IsValid(ent) ) then continue end
+                if ( ent:IsDormant() ) then continue end
+
+                ent:SetNW2Bool("GlowLib:ShouldDraw", cl_glowlib_enabled)
+                if ( !GlowLib:ShouldDraw(ent) ) then
+                    GlowLib:Hide(ent)
+                    continue
+                end
+
+                GlowLib:Show(ent)
+            end
+        end
+
+        self.NextThink = CurTime() + GlowLib.Config.DELAY_THINK_CLIENT
     end
 end
 
