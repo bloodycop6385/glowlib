@@ -41,7 +41,7 @@ if ( SERVER ) then
 
         local model = ent:GetModel()
         if ( !model ) then return end
-        model = model:lower()
+        model = string.lower(model)
 
         local ent_table = ent:GetTable()
         if ( !ent_table ) then return end
@@ -68,7 +68,7 @@ if ( SERVER ) then
 
         local ent_model = ent:GetModel()
         if ( !ent_model ) then return end
-        ent_model = ent_model:lower()
+        ent_model = string.lower(ent_model)
 
         local glowData = self.Glow_Data[ent_model]
         if ( !glowData ) then return end
@@ -131,6 +131,7 @@ if ( SERVER ) then
 
         local model = ent:GetModel()
         if ( !model ) then return end
+        model = string.lower(model)
 
         local glow_eyes = ent:GetGlowingEyes()
         for k, v in ipairs(glow_eyes) do
@@ -143,12 +144,15 @@ if ( SERVER ) then
     end
 
     function GlowLib:RemoveAll()
-        for model, _ in pairs(self.Glow_Data) do
+        for i = 1, #self.Glow_Data_Keys do
+            local model = self.Glow_Data_Keys[i]
+            model = string.lower(model)
+
             local entities = ents.FindByModel(model)
             if ( entities[1] == nil ) then continue end
 
-            for i = 1, #entities do
-                self:Remove(entities[i])
+            for j = 1, #entities do
+                self:Remove(entities[j])
             end
         end
 
@@ -251,10 +255,10 @@ if ( SERVER ) then
 
         local model = ent:GetModel()
         if ( !model ) then return end
-        model = model:lower()
+        model = string.lower(model)
 
         local glowEyes = ent:GetGlowingEyes()
-        if ( !glowEyes or #glowEyes == 0 ) then return end
+        if ( !glowEyes or glowEyes[1] == nil ) then return end
 
         local glowData = GlowLib.Glow_Data[model]
         if ( !glowData ) then return end
@@ -292,7 +296,7 @@ if ( SERVER ) then
     GlowLib.NextThink = 0
     function GlowLib:Think()
         if ( self.NextThink > CurTime() ) then return end
-        if ( self.Glow_Data_Keys[1] == nil ) then self.NextThink = CurTime() + GlowLib.Config.DELAY_THINK_SERVER return end
+        if ( self.Glow_Data_Keys[1] == nil ) then self.NextThink = CurTime() + self.Config.DELAY_THINK_SERVER return end
 
         for i = 1, #self.Glow_Data_Keys do
             local model = self.Glow_Data_Keys[i]
@@ -311,11 +315,11 @@ if ( SERVER ) then
                 end
 
                 updateGlow(ent)
-                GlowLib:Show(ent)
+                self:Show(ent)
             end
         end
 
-        self.NextThink = CurTime() + GlowLib.Config.DELAY_THINK_SERVER
+        self.NextThink = CurTime() + self.Config.DELAY_THINK_SERVER
     end
 else
     local function handleViewEntityChange()
@@ -364,10 +368,10 @@ else
         end
 
         if ( self.NextThink > CurTime() ) then return end
-        if ( GlowLib.Glow_Data_Keys[1] == nil ) then self.NextThink = CurTime() + GlowLib.Config.DELAY_THINK_CLIENT return end
+        if ( self.Glow_Data_Keys[1] == nil ) then self.NextThink = CurTime() + self.Config.DELAY_THINK_CLIENT return end
 
-        for i = 1, #GlowLib.Glow_Data_Keys do
-            local model = GlowLib.Glow_Data_Keys[i]
+        for i = 1, #self.Glow_Data_Keys do
+            local model = self.Glow_Data_Keys[i]
             model = string.lower(model)
 
             local entities = ents.FindByModel(model)
@@ -379,16 +383,17 @@ else
                 if ( ent:IsDormant() ) then continue end
 
                 ent:SetNW2Bool("GlowLib:ShouldDraw", cl_glowlib_enabled)
-                if ( !GlowLib:ShouldDraw(ent) ) then
-                    GlowLib:Hide(ent)
+
+                if ( !self:ShouldDraw(ent) ) then
+                    self:Hide(ent)
                     continue
                 end
 
-                GlowLib:Show(ent)
+                self:Show(ent)
             end
         end
 
-        self.NextThink = CurTime() + GlowLib.Config.DELAY_THINK_CLIENT
+        self.NextThink = CurTime() + self.Config.DELAY_THINK_CLIENT
     end
 end
 
@@ -397,7 +402,7 @@ function GlowLib:Hide(ent)
 
     local model = ent:GetModel()
     if ( !model ) then return end
-    model = model:lower()
+    model = string.lower(model)
 
     local glowData = self.Glow_Data[model]
     if ( !glowData ) then return end
@@ -431,7 +436,7 @@ function GlowLib:HideAll()
 
         local model = v:GetModel()
         if ( !model ) then continue end
-        model = model:lower()
+        model = string.lower(model)
 
         local glowData = self.Glow_Data[model]
         if ( !glowData ) then continue end
@@ -445,7 +450,7 @@ function GlowLib:Show(ent)
 
     local model = ent:GetModel()
     if ( !model ) then return end
-    model = model:lower()
+    model = string.lower(model)
 
     local glowData = self.Glow_Data[model]
     if ( !glowData ) then return end
@@ -478,41 +483,41 @@ function GlowLib:Show(ent)
 end
 
 function GlowLib:ShowAll()
-    for k, v in ents.Iterator() do
-        if not ( IsValid(v) ) then
-            continue
+    if ( self.Glow_Data_Keys[1] == nil ) then return end
+
+    for i = 1, #self.Glow_Data_Keys do
+        local model = self.Glow_Data_Keys[i]
+        model = string.lower(model)
+
+        local entities = ents.FindByModel(model)
+        if ( !entities or entities[1] == nil ) then continue end
+
+        for j = 1, #entities do
+            local ent = entities[j]
+            if ( !IsValid(ent) ) then continue end
+
+            self:Show(ent)
         end
-
-        local model = v:GetModel()
-        if ( !model ) then continue end
-        model = model:lower()
-
-        local glowData = self.Glow_Data[model]
-        if ( !glowData ) then continue end
-
-        self:Show(v)
     end
 end
 
 function GlowLib:ShouldDraw(ent)
     if ( CLIENT ) then
-        local glib_enabled = GetConVar("cl_glowlib_enabled"):GetBool()
-        if ( !glib_enabled ) then return false end
+        if ( !self.CVARS.CL_ENABLED:GetBool() ) then return false end
     else
-        local glib_enabled = GetConVar("sv_glowlib_enabled"):GetBool()
-        if ( !glib_enabled ) then return false end
+        if ( !self.CVARS.SV_ENABLED:GetBool() ) then return false end
     end
 
     if ( !IsValid(ent) ) then return false end
 
     local model = ent:GetModel()
     if ( !model ) then return false end
-    model = model:lower()
+    model = string.lower(model)
 
     local glowData = self.Glow_Data[model]
     if ( !glowData ) then
         if ( SERVER ) then
-            GlowLib:Remove(v)
+            self:Remove(v)
         end
 
         return false
@@ -530,14 +535,15 @@ function GlowLib:ShouldDraw(ent)
     if ( ( ent:IsNPC() or ent:IsPlayer() or ent:IsNextBot() ) and ent:Health() <= 0 and !glowData.IgnoreHealth ) then return false end
     if ( ent:GetNoDraw() ) then return false end
 
-    if ( CLIENT ) then
-        if ( ent:IsRagdoll() ) then
-            if ( ent:GetNW2Bool("GlowLib:IsNPCRagdoll", false) == true and GlowLib.CVARS.CL_REMOVE_ON_DEATH:GetBool() ) then
-                return false
-            end
-
-            return GlowLib.CVARS.CL_RAGDOLLS:GetBool()
+    if ( ent:IsRagdoll() ) then
+        if ( ent:GetNW2Bool("GlowLib:IsNPCRagdoll", false) == true and ( CLIENT and self.CVARS.CL_REMOVE_ON_DEATH:GetBool() ) or ( SERVER and self.CVARS.SV_REMOVE_ON_DEATH:GetBool() ) ) then
+            return false
         end
+
+        return CLIENT and self.CVARS.CL_RAGDOLLS:GetBool() or self.CVARS.SV_RAGDOLLS:GetBool()
+    end
+
+    if ( CLIENT ) then
 
         if ( ent == LocalPlayer() ) then
             local shouldDrawLocalPlayer = ent:ShouldDrawLocalPlayer() or hook.Run("ShouldDrawLocalPlayer", ent) or false
@@ -550,14 +556,6 @@ function GlowLib:ShouldDraw(ent)
             return false
         end
     else
-        if ( ent:IsRagdoll() ) then
-            if ( ent:GetNW2Bool("GlowLib:IsNPCRagdoll", false) == true and GlowLib.CVARS.SV_REMOVE_ON_DEATH:GetBool() ) then
-                return false
-            end
-
-            return GlowLib.CVARS.SV_RAGDOLLS:GetBool()
-        end
-
         if ( ent:IsPlayer() ) then
             net.Start("GlowLib:HideServerside")
             net.Send(ent)
