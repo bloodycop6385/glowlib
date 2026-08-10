@@ -17,6 +17,20 @@ GlowLib.Config = {
     DELAY_THINK_CLIENT = 0.3,
 }
 
+if ( SERVER and GlowLib.CVARS.SV_ENABLED:GetBool() ) then
+    hook.Remove("Think", "GlowLib:ThinkSV")
+    hook.Add("Think", "GlowLib:ThinkSV", function()
+        GlowLib:Think()
+    end)
+end
+
+if ( CLIENT and GlowLib.CVARS.CL_ENABLED:GetBool() ) then
+    hook.Remove("Think", "GlowLib:ThinkCL")
+    hook.Add("Think", "GlowLib:ThinkCL", function()
+        GlowLib:Think()
+    end)
+end
+
 cvars.AddChangeCallback("sv_glowlib_enabled", function(_, _, newValue)
     if ( !SERVER ) then return end
 
