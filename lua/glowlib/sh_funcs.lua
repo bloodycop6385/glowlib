@@ -502,11 +502,7 @@ function GlowLib:ShowAll()
 end
 
 function GlowLib:ShouldDraw(ent)
-    if ( CLIENT ) then
-        if ( !self.CVARS.CL_ENABLED:GetBool() ) then return false end
-    else
-        if ( !self.CVARS.SV_ENABLED:GetBool() ) then return false end
-    end
+    if ( !self.CVARS.CL_ENABLED:GetBool() or !self.CVARS.SV_ENABLED:GetBool() ) then return false end
 
     if ( !IsValid(ent) ) then return false end
 
